@@ -1,0 +1,801 @@
+openapi: "3.1.0"
+
+info:
+  title: Petlibro API Documentation
+  version: "0.1.0"
+  description: |
+    REST API for the Petlibro cloud service, as used by the
+    [Petlibro Home Assistant integration](https://github.com/jjjonesjr33/petlibro).
+    The API allows you to interact with PetLibro devices, retrieve device status,
+    and manage device settings programmatically.
+
+    ## Authentication
+
+    All API requests require a Token header with a valid token.
+    You can obtain this token by using the /member/auth/login endpoint
+    to authenticate with an email and password.
+servers:
+  - url: https://api.us.petlibro.com
+
+tags:
+  - name: Auth
+  - name: Devices
+
+components:
+  parameters:
+    HeaderSource:
+      name: source
+      in: header
+      required: true
+      description: Client platform identifier.
+      schema:
+        type: string
+        const: ANDROID
+      example: ANDROID
+
+    HeaderLanguage:
+      name: language
+      in: header
+      required: true
+      description: Response language.
+      schema:
+        type: string
+        const: EN
+      example: EN
+
+    HeaderTimezone:
+      name: timezone
+      in: header
+      required: true
+      description: IANA timezone name for the client.
+      schema:
+        type: string
+      example: America/Chicago
+
+    HeaderVersion:
+      name: version
+      in: header
+      required: true
+      description: App version string.
+      schema:
+        type: string
+      example: "1.3.45"
+
+  securitySchemes:
+    TokenAuth:
+      type: apiKey
+      in: header
+      name: token
+      description: |
+        Session token obtained from `POST /member/auth/login`.
+        When this token expires the server will return code `1009`.
+
+  requestBodies:
+    DeviceSerial:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [id, deviceSn]
+            properties:
+              id:
+                type: string
+                description: Device serial number.
+                example: "AF060130AC701DEW1"
+              deviceSn:
+                type: string
+                description: Device serial number.
+                example: "AF060130AC701DEW1"
+
+  schemas:
+    SuccessResponse:
+      type: object
+      description: Standard wrapper for every successful API response.
+      required: [code, msg, data]
+      properties:
+        code:
+          type: integer
+          const: 0
+          description: Always `0` on success.
+          example: 0
+        msg:
+          type: "null"
+          description: |
+            Status message is null on success.
+            Non-null string values appear only on errors.
+          example: null
+        data:
+          description: Endpoint-specific payload.
+
+    ErrorResponse:
+      type: object
+      description: |
+        Standard wrapper for every unsuccessful response.
+        HTTP status is always 200. Identify errors by `code != 0`.
+      required: [code, msg]
+      properties:
+        code:
+          type: integer
+          description: Non-zero error code.
+          examples:
+            - 1001
+            - 1009
+        msg:
+          type: string
+          description: Human-readable error description.
+          examples:
+            - "SYSTEM_ERROR"
+            - "NOT_YET_LOGIN"
+        data:
+          type: "null"
+          description: Typically `null` for errors.
+
+    Device:
+      type: object
+      description: |
+        A Petlibro device (feeder, fountain, or litter box).
+      # field sets vary across device models
+      additionalProperties: true
+      properties:
+        deviceSn:
+          type: string
+          description: |
+            Unique device serial number. Used as both `id` and `deviceSn` in
+            the request body of device-specific API calls.
+          example: "AF060130AC701DEW1"
+        productIdentifier:
+          type: string
+          description: |
+            Device model code.
+          example: "PLAF301"
+        productName:
+          type: string
+          description: |
+            Human-readable product name.
+          enum:
+            - "Air Smart Feeder"
+            - "Granary Smart Feeder"
+            - "Granary Smart Camera Feeder"
+            - "One RFID Smart Feeder"
+            - "Polar Wet Food Feeder"
+            - "Dockstream Smart Fountain"
+            - "Dockstream Smart RFID Fountain"
+            - "Dockstream 2 Smart Cordless Fountain"
+            - "Dockstream 2 Smart Fountain"
+            - "Space Smart Feeder"
+            - "Luma Smart Litter Box"
+          example: "One RFID Smart Feeder"
+        name:
+          type: string
+          description: Device nickname.
+          example: "One RFID Smart Feeder"
+        icon:
+          type: string
+          format: uri
+          description: Product icon image URL.
+          example: "https://oss.us.petlibro.com/dlcloud/platform/product_icon/product_icon_66b4a757048e592c7e3a75d4.png"
+        imageId:
+          type: string
+          example: "34a429d93ccc4dc88066aa0c9589410d"
+        imageName:
+          type: string
+          example: "DARK COFFEE"
+        mac:
+          type: string
+          description: Device Wi-Fi MAC address.
+          example: "96:E6:E0:BF:55:09"
+        timezone:
+          type: string
+          description: IANA timezone configured on the device.
+          example: "America/Chicago"
+        online:
+          type: boolean
+          example: true
+        wifiRssi:
+          type: integer
+          description: Wi-Fi signal strength in dBm.
+          example: -50
+        wifiRssiLevel:
+          type: integer
+          example: 4
+        powerType:
+          type: integer
+          example: 1
+        powerMode:
+          type: integer
+          example: 1
+        electricQuantity:
+          type: integer
+          example: 0
+        batteryState:
+          type: string
+          example: "low"
+        enableBatteryPercent:
+          type: boolean
+          example: false
+        softwareVersion:
+          type: string
+          example: "2.0.47"
+        hardwareVersion:
+          type: string
+          example: "4.0.0"
+        minAppVersion:
+          type: string
+          example: ""
+        enableAutoUpgrade:
+          type: boolean
+          example: true
+        firstCategoryId:
+          type: integer
+          example: 1
+        firstCategoryName:
+          type: string
+        secondCategoryId:
+          type: integer
+        secondCategoryName:
+          type: string
+        secondCategoryNameI18n:
+          type: string
+          example: "Feeder"
+        deviceShareState:
+          type: integer
+          description: |
+            Sharing relationship between this device and another account.
+
+            | Value | Meaning                                                   |
+            |-------|-----------------------------------------------------------|
+            | `1`   | Shared t* this account - another member owns the device |
+            | `2`   | Owned by this account and currently shared with others    |
+            | `3`   | Owned by this account, not shared                         |
+          enum: [1, 2, 3]
+          example: 3
+        shareId:
+          type: string
+          description: |
+            Share-relationship identifier. Absent when `deviceShareState`
+            is `3`.
+        errorState:
+          type: boolean
+          example: false
+        doorErrorState:
+          type: string
+          example: "NORMAL"
+        exceptionMessage:
+          type: ["string", "null"]
+        deviceStoppedWorking:
+          type: boolean
+          example: false
+        enableSound:
+          type: boolean
+          example: true
+        enableLight:
+          type: boolean
+          example: true
+        coverOpenMode:
+          type: string
+          example: "KEEP_CLOSE"
+        barnDoorState:
+          type: boolean
+          example: false
+        barnDoorError:
+          type: boolean
+          example: false
+        snowflake:
+          type: boolean
+          example: true
+        vacuumState:
+          type: boolean
+          example: true
+        pumpAirState:
+          type: boolean
+          example: true
+        vacuumMode:
+          type: string
+          example: "NORMAL"
+        surplusGrain:
+          type: boolean
+          example: false
+        grainOutletState:
+          type: boolean
+          example: true
+        leftWarehouseSurplusGrain:
+          type: boolean
+          example: true
+        rightWarehouseSurplusGrain:
+          type: boolean
+          example: true
+        warehouseSurplusGrain:
+          type: string
+          example: "GOOD"
+        garbageWarehouseState:
+          type: string
+          example: "NORMAL"
+        garbageWarehouseLeaveState:
+          type: string
+          example: "NORMAL"
+        throwMode:
+          type: string
+          example: "NORMAL"
+        supportFeederTrayChoice:
+          type: boolean
+          example: true
+        enableFeedingPlan:
+          type: boolean
+          example: true
+        unitType:
+          type: integer
+          description: |
+            Food quantity unit in use.
+
+            | Value | Unit   |
+            |-------|--------|
+            | `1`   | cups   |
+            | `2`   | oz     |
+            | `3`   | g      |
+            | `4`   | mL     |
+          enum: [1, 2, 3, 4]
+          example: 2
+        todayTotalMl:
+          type: integer
+          example: 0
+        weightPercent:
+          type: integer
+          example: 0
+        weight:
+          type: number
+          example: 0.0
+        weightState:
+          type: string
+          example: "NORMAL"
+        cameraAuthInfo:
+          type: ["string", "null"]
+
+paths:
+  /member/auth/login:
+    post:
+      operationId: login
+      summary: Login and obtain a session token
+      parameters:
+        - $ref: "#/components/parameters/HeaderSource"
+        - $ref: "#/components/parameters/HeaderLanguage"
+        - $ref: "#/components/parameters/HeaderTimezone"
+        - $ref: "#/components/parameters/HeaderVersion"
+      description: |
+        Exchanges an email address and MD5-hashed password for an opaque session
+        token. Store the returned `data.token` value and pass it as the `token`
+        header on all subsequent authenticated requests.
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - appId
+                - appSn
+                - country
+                - email
+                - password
+                - phoneBrand
+                - phoneSystemVersion
+                - timezone
+              properties:
+                appId:
+                  type: integer
+                  const: 1
+                  description: Application ID. Always `1` for the official app.
+                  example: 1
+                appSn:
+                  type: string
+                  const: "c35772530d1041699c87fe62348507a8"
+                  description: Application serial number. Fixed value for the official app.
+                  example: "c35772530d1041699c87fe62348507a8"
+                country:
+                  type: string
+                  description: |
+                    ISO 3166-1 alpha-2 region/country code.
+                  example: "US"
+                email:
+                  type: string
+                  format: email
+                  description: Account email address.
+                  example: "you@example.com"
+                password:
+                  type: string
+                  description: |
+                    MD5 hex digest of the plaintext
+                    password. The result should be 32 lowercase hex letters.
+                    You might form this with:
+
+                    ```bash
+                    echo -n "yourpassword" | md5sum | cut -d' ' -f1
+                    ```
+                  pattern: "^[0-9a-f]{32}$"
+                  example: "5f4dcc3b5aa765d61d8327deb882cf99"
+                phoneBrand:
+                  type: string
+                  description: Device brand string. Send an empty string for non-app clients.
+                  example: ""
+                phoneSystemVersion:
+                  type: string
+                  description: Device OS version string. Send an empty string for non-app clients.
+                  example: ""
+                timezone:
+                  type: string
+                  description: IANA timezone name for this session.
+                  example: "America/Chicago"
+                thirdId:
+                  type: ["null"]
+                  default: null
+                  example: null
+                type:
+                  type: ["null"]
+                  default: null
+                  example: null
+
+            examples:
+              EmailLogin:
+                summary: Email + password login
+                description: Replace `password` with the MD5 hash of your actual password.
+                value:
+                  email: "you@example.com"
+                  password: "5f4dcc3b5aa765d61d8327deb882cf99"
+                  appId: 1
+                  appSn: "c35772530d1041699c87fe62348507a8"
+                  country: "US"
+                  phoneBrand: ""
+                  phoneSystemVersion: ""
+                  timezone: "America/Chicago"
+                  thirdId: null
+                  type: null
+      responses:
+        "200":
+          description: |
+            The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            required: [token]
+                            properties:
+                              token:
+                                type: string
+                                description: |
+                                  Opaque session token. Pass this value as the `token` header on all
+                                  subsequent authenticated requests.
+                                example: "fe8d304a0effd0a242914660cbce6512"
+                              clientId:
+                                type: string
+                                example: "APP_190294628"
+                              pushId:
+                                type: ["string", "null"]
+                                example: null
+                              memberId:
+                                type: integer
+                                example: 190294628
+                              account:
+                                type: string
+                                description: Account identifier. In practice the same as email.
+                                example: "example@example.com"
+                              accountType:
+                                type: integer
+                                example: 1
+                              email:
+                                type: string
+                                format: email
+                                example: "example@example.com"
+                              avatar:
+                                type: ["string", "null"]
+                                example: null
+                              nickname:
+                                type: string
+                                example: ""
+                              country:
+                                type: string
+                                example: "US"
+                              gender:
+                                type: integer
+                                enum: [0, 1, 2]
+                                example: 0
+                              status:
+                                type: integer
+                                example: 0
+                              enableBiometric:
+                                type: boolean
+                                example: false
+                              area:
+                                type: string
+                                example: "US"
+                              petCareKind:
+                                type: string
+                                example: "FREE"
+                            additionalProperties: true
+                  - $ref: "#/components/schemas/ErrorResponse"
+
+  /device/device/list:
+    post:
+      operationId: listDevices
+      summary: List all devices on the account
+      parameters:
+        - $ref: "#/components/parameters/HeaderSource"
+        - $ref: "#/components/parameters/HeaderLanguage"
+        - $ref: "#/components/parameters/HeaderTimezone"
+        - $ref: "#/components/parameters/HeaderVersion"
+      description: |
+        Returns every Petlibro device linked to the authenticated account, including devices shared to this account by another member.
+        Use `deviceSn` as the identifier in all subsequent device-specific calls.
+      tags: [Devices]
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              nullable: true
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                      - type: object
+                        properties:
+                          data:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Device"
+                  - $ref: "#/components/schemas/ErrorResponse"
+
+  /device/device/baseInfo:
+    post:
+      operationId: deviceBaseInfo
+      summary: Get base configuration for a device
+      parameters:
+        - $ref: "#/components/parameters/HeaderSource"
+        - $ref: "#/components/parameters/HeaderLanguage"
+        - $ref: "#/components/parameters/HeaderTimezone"
+        - $ref: "#/components/parameters/HeaderVersion"
+      description: |
+        Retrieve basic information for a specific device.
+      tags: [Devices]
+      security:
+        - TokenAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/DeviceSerial"
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+
+  /device/device/realInfo:
+    post:
+      operationId: deviceRealInfo
+      summary: Retrieve real-time information from a device.
+      parameters:
+        - $ref: "#/components/parameters/HeaderSource"
+        - $ref: "#/components/parameters/HeaderLanguage"
+        - $ref: "#/components/parameters/HeaderTimezone"
+        - $ref: "#/components/parameters/HeaderVersion"
+      description: |
+        Retrieve real-time information from a specific device, such as feeding activity, current settings, and status.
+      tags: [Devices]
+      security:
+        - TokenAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/DeviceSerial"
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                      - type: object
+                        properties:
+                          data:
+                            $ref: "#/components/schemas/Device"
+                  - $ref: "#/components/schemas/ErrorResponse"
+
+  /device/device/displayMatrix:
+    post:
+      operationId: deviceDisplayMatrix
+      summary: Set the LED matrix display content
+      parameters:
+        - $ref: "#/components/parameters/HeaderSource"
+        - $ref: "#/components/parameters/HeaderLanguage"
+        - $ref: "#/components/parameters/HeaderTimezone"
+        - $ref: "#/components/parameters/HeaderVersion"
+      description: |
+        Sets what is shown on the device's LED matrix display. The endpoint
+        accepts mutually exclusive modes controlled by which field is
+        non-null:
+
+        | Mode       | Non-null field    |
+        |------------|-------------------|
+        | Icon       | `screenDisplayId` |
+        | Text       | `screenLetter`    |
+        | Bitmap     | `screenDisplayMatrix`|
+      tags: [Devices]
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceSn]
+              properties:
+                deviceSn:
+                  type: string
+                  description: Device serial number.
+                screenDisplayId:
+                  type: ["integer", "null"]
+                  description: |
+                    ID of a built-in icon preset to display. Set to `null`
+                    when using other mode.
+                    | screenDisplayId | Icon |
+                    |-|-|
+                    | 5 | Heart |
+                    | 6 | Dog |
+                    | 7 | Cat |
+                    | 8 | Elk |
+                  example: 5
+                screenDisplayMatrix:
+                  type: array
+                  items:
+                    type: array
+                    items:
+                      type: integer
+                  description: |
+                    Two-dimensional array of frames of pixel data for a fully custom display pattern.
+                    Set to `null` when using other mode.
+                    Each array element is a bitmap of the pixels in each row, starting from the top right.
+                    So `[[1,0,0,0,0,0,0]]` draws the top right pixel and `[[0,0,0,0,0,0,134217728]]` (2^27) draws the bottom left one.
+                    The outer array can be used to send multiple frames to animate.
+                  example: null
+                screenLetter:
+                  type: ["string", "null"]
+                  description: |
+                    Letter to show on the display.
+                    Set to `null` when using other mode.
+            examples:
+              IconMode:
+                summary: Set a built-in icon
+                value:
+                  deviceSn: "AF060130AC701DEW1"
+                  screenDisplayId: 5
+                  screenDisplayMatrix: null
+                  screenLetter: null
+              TextMode:
+                summary: Set text
+                value:
+                  deviceSn: "AF060130AC701DEW1"
+                  screenDisplayId: null
+                  screenDisplayMatrix: null
+                  screenLetter: "M"
+              MatrixMode:
+                summary: Draw check mark
+                value:
+                  deviceSn: "AF060130AC701DEW1"
+                  screenDisplayId: null
+                  screenDisplayMatrix: [[1, 2, 4, 8, 272, 160, 64]]
+                  screenLetter: null
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+
+  /device/device/manualFeeding:
+    post:
+      operationId: deviceManualFeeding
+      summary: Trigger an immediate manual feed
+      parameters:
+        - $ref: "#/components/parameters/HeaderSource"
+        - $ref: "#/components/parameters/HeaderLanguage"
+        - $ref: "#/components/parameters/HeaderTimezone"
+        - $ref: "#/components/parameters/HeaderVersion"
+      description: |
+        Commands a feeder to immediately dispense a specified number of food
+        portions.
+      tags: [Devices]
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceSn, grainNum, requestId]
+              properties:
+                deviceSn:
+                  type: string
+                  description: Device serial number.
+                  example: "AF060130AC701DEW1"
+                grainNum:
+                  type: integer
+                  description: |
+                    Number of portions to dispense. Must be a positive integer.
+                  minimum: 1
+                  example: 1
+                requestId:
+                  type: string
+                  description: |
+                    Unique request identifier — a UUID4 with hyphens removed.
+                  pattern: "^[0-9a-f]{32}$"
+                  example: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+
+  /device/data/grainStatus:
+    post:
+      operationId: deviceGrainStatus
+      summary: Retrieve the current grain status.
+      parameters:
+        - $ref: "#/components/parameters/HeaderSource"
+        - $ref: "#/components/parameters/HeaderLanguage"
+        - $ref: "#/components/parameters/HeaderTimezone"
+        - $ref: "#/components/parameters/HeaderVersion"
+      description: Retrieve the current grain status of a feeder, such as the remaining food level and whether there are any blockages.
+      tags: [Devices]
+      security:
+        - TokenAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/DeviceSerial"
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              todayFeedingQuantity:
+                                type: number
+                                description: Total food dispensed today.
+                                example: 2
+                              todayFeedingTimes:
+                                type: integer
+                                description: Total number of dispensing events today.
+                                example: 1
+                  - $ref: "#/components/schemas/ErrorResponse"
