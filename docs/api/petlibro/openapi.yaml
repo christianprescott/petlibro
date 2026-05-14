@@ -544,16 +544,14 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - allOf:
-                      - $ref: "#/components/schemas/SuccessResponse"
-                      - type: object
-                        properties:
-                          data:
-                            type: array
-                            items:
-                              $ref: "#/components/schemas/Device"
-                  - $ref: "#/components/schemas/ErrorResponse"
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Device"
 
   /device/device/baseInfo:
     post:
@@ -577,9 +575,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
-                  - $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/SuccessResponse"
 
   /device/device/realInfo:
     post:
@@ -603,14 +599,12 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - allOf:
-                      - $ref: "#/components/schemas/SuccessResponse"
-                      - type: object
-                        properties:
-                          data:
-                            $ref: "#/components/schemas/Device"
-                  - $ref: "#/components/schemas/ErrorResponse"
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Device"
 
   /device/device/displayMatrix:
     post:
@@ -705,9 +699,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
-                  - $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/SuccessResponse"
 
   /device/device/manualFeeding:
     post:
@@ -754,9 +746,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
-                  - $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/SuccessResponse"
 
   /device/data/grainStatus:
     post:
@@ -779,20 +769,18 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - allOf:
-                      - $ref: "#/components/schemas/SuccessResponse"
-                      - type: object
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
                         properties:
-                          data:
-                            type: object
-                            properties:
-                              todayFeedingQuantity:
-                                type: number
-                                description: Total food dispensed today.
-                                example: 2
-                              todayFeedingTimes:
-                                type: integer
-                                description: Total number of dispensing events today.
-                                example: 1
-                  - $ref: "#/components/schemas/ErrorResponse"
+                          todayFeedingQuantity:
+                            type: number
+                            description: Total food dispensed today.
+                            example: 2
+                          todayFeedingTimes:
+                            type: integer
+                            description: Total number of dispensing events today.
+                            example: 1
