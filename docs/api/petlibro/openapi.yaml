@@ -21,46 +21,14 @@ tags:
   - name: Auth
   - name: Devices
 
+security:
+  - TokenAuth: []
+    Source: []
+    Language: []
+    Version: []
+    Timezone: []
+
 components:
-  parameters:
-    HeaderSource:
-      name: source
-      in: header
-      required: true
-      description: Client platform identifier.
-      schema:
-        type: string
-        const: ANDROID
-      example: ANDROID
-
-    HeaderLanguage:
-      name: language
-      in: header
-      required: true
-      description: Response language.
-      schema:
-        type: string
-        const: EN
-      example: EN
-
-    HeaderTimezone:
-      name: timezone
-      in: header
-      required: true
-      description: IANA timezone name for the client.
-      schema:
-        type: string
-      example: America/Chicago
-
-    HeaderVersion:
-      name: version
-      in: header
-      required: true
-      description: App version string.
-      schema:
-        type: string
-      example: "1.3.45"
-
   securitySchemes:
     TokenAuth:
       type: apiKey
@@ -69,6 +37,22 @@ components:
       description: |
         Session token obtained from `POST /member/auth/login`.
         When this token expires the server will return code `1009`.
+    Source:
+      type: apiKey
+      in: header
+      name: source
+    Language:
+      type: apiKey
+      in: header
+      name: language
+    Version:
+      type: apiKey
+      in: header
+      name: version
+    Timezone:
+      type: apiKey
+      in: header
+      name: timezone
 
   requestBodies:
     DeviceSerial:
@@ -359,17 +343,11 @@ paths:
     post:
       operationId: login
       summary: Login and obtain a session token
-      parameters:
-        - $ref: "#/components/parameters/HeaderSource"
-        - $ref: "#/components/parameters/HeaderLanguage"
-        - $ref: "#/components/parameters/HeaderTimezone"
-        - $ref: "#/components/parameters/HeaderVersion"
       description: |
         Exchanges an email address and MD5-hashed password for an opaque session
         token. Store the returned `data.token` value and pass it as the `token`
         header on all subsequent authenticated requests.
       tags: [Auth]
-      security: []
       requestBody:
         required: true
         content:
@@ -520,17 +498,10 @@ paths:
     post:
       operationId: listDevices
       summary: List all devices on the account
-      parameters:
-        - $ref: "#/components/parameters/HeaderSource"
-        - $ref: "#/components/parameters/HeaderLanguage"
-        - $ref: "#/components/parameters/HeaderTimezone"
-        - $ref: "#/components/parameters/HeaderVersion"
       description: |
         Returns every Petlibro device linked to the authenticated account, including devices shared to this account by another member.
         Use `deviceSn` as the identifier in all subsequent device-specific calls.
       tags: [Devices]
-      security:
-        - TokenAuth: []
       requestBody:
         required: false
         content:
@@ -557,16 +528,9 @@ paths:
     post:
       operationId: deviceBaseInfo
       summary: Get base configuration for a device
-      parameters:
-        - $ref: "#/components/parameters/HeaderSource"
-        - $ref: "#/components/parameters/HeaderLanguage"
-        - $ref: "#/components/parameters/HeaderTimezone"
-        - $ref: "#/components/parameters/HeaderVersion"
       description: |
         Retrieve basic information for a specific device.
       tags: [Devices]
-      security:
-        - TokenAuth: []
       requestBody:
         $ref: "#/components/requestBodies/DeviceSerial"
       responses:
@@ -581,16 +545,9 @@ paths:
     post:
       operationId: deviceRealInfo
       summary: Retrieve real-time information from a device.
-      parameters:
-        - $ref: "#/components/parameters/HeaderSource"
-        - $ref: "#/components/parameters/HeaderLanguage"
-        - $ref: "#/components/parameters/HeaderTimezone"
-        - $ref: "#/components/parameters/HeaderVersion"
       description: |
         Retrieve real-time information from a specific device, such as feeding activity, current settings, and status.
       tags: [Devices]
-      security:
-        - TokenAuth: []
       requestBody:
         $ref: "#/components/requestBodies/DeviceSerial"
       responses:
@@ -610,11 +567,6 @@ paths:
     post:
       operationId: deviceDisplayMatrix
       summary: Set the LED matrix display content
-      parameters:
-        - $ref: "#/components/parameters/HeaderSource"
-        - $ref: "#/components/parameters/HeaderLanguage"
-        - $ref: "#/components/parameters/HeaderTimezone"
-        - $ref: "#/components/parameters/HeaderVersion"
       description: |
         Sets what is shown on the device's LED matrix display. The endpoint
         accepts mutually exclusive modes controlled by which field is
@@ -626,8 +578,6 @@ paths:
         | Text       | `screenLetter`    |
         | Bitmap     | `screenDisplayMatrix`|
       tags: [Devices]
-      security:
-        - TokenAuth: []
       requestBody:
         required: true
         content:
@@ -705,17 +655,10 @@ paths:
     post:
       operationId: deviceManualFeeding
       summary: Trigger an immediate manual feed
-      parameters:
-        - $ref: "#/components/parameters/HeaderSource"
-        - $ref: "#/components/parameters/HeaderLanguage"
-        - $ref: "#/components/parameters/HeaderTimezone"
-        - $ref: "#/components/parameters/HeaderVersion"
       description: |
         Commands a feeder to immediately dispense a specified number of food
         portions.
       tags: [Devices]
-      security:
-        - TokenAuth: []
       requestBody:
         required: true
         content:
@@ -752,15 +695,8 @@ paths:
     post:
       operationId: deviceGrainStatus
       summary: Retrieve the current grain status.
-      parameters:
-        - $ref: "#/components/parameters/HeaderSource"
-        - $ref: "#/components/parameters/HeaderLanguage"
-        - $ref: "#/components/parameters/HeaderTimezone"
-        - $ref: "#/components/parameters/HeaderVersion"
       description: Retrieve the current grain status of a feeder, such as the remaining food level and whether there are any blockages.
       tags: [Devices]
-      security:
-        - TokenAuth: []
       requestBody:
         $ref: "#/components/requestBodies/DeviceSerial"
       responses:
