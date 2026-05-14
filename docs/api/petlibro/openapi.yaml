@@ -37,22 +37,30 @@ components:
       description: |
         Session token obtained from `POST /member/auth/login`.
         When this token expires the server will return code `1009`.
+    # The following headers are documented as "security schemes" for
+    # convenience. This way they are set once and don't need to be duplicated on
+    # each path for the convenience of Swagger UI users and generated API
+    # clients.
     Source:
       type: apiKey
       in: header
       name: source
+      description: Source of the client activity. Use "ANDROID"
     Language:
       type: apiKey
       in: header
       name: language
+      description: Preferred client language. Use "EN"
     Version:
       type: apiKey
       in: header
       name: version
+      description: Client app version. Use "1.3.45"
     Timezone:
       type: apiKey
       in: header
       name: timezone
+      description: Optional. May be used for parsing times in request params. IANA time zone e.g. "America/Chicago"
 
   requestBodies:
     DeviceSerial:
@@ -73,15 +81,20 @@ components:
                 example: "AF060130AC701DEW1"
 
   schemas:
-    SuccessResponse:
+    Response:
       type: object
-      description: Standard wrapper for every successful API response.
+      description: Standard wrapper for every successful API response. HTTP status is always 200. Identify errors by `code != 0`.
       required: [code, msg, data]
       properties:
         code:
           type: integer
-          const: 0
-          description: Always `0` on success.
+          description: |
+            Always `0` on success. Unsuccessful response will have a non-zero code:
+            | code | msg |
+            |-|-|
+            | 1001 | SYSTEM_ERROR |
+            | 1009 | NOT_YET_LOGIN |
+            | 1025 | FORCED_LOGOUT |
           example: 0
         msg:
           type: string
@@ -91,30 +104,7 @@ components:
             Non-null string values appear only on errors.
           example: null
         data:
-          description: Endpoint-specific payload.
-
-    ErrorResponse:
-      type: object
-      description: |
-        Standard wrapper for every unsuccessful response.
-        HTTP status is always 200. Identify errors by `code != 0`.
-      required: [code, msg]
-      properties:
-        code:
-          type: integer
-          description: Non-zero error code.
-          examples:
-            - 1001
-            - 1009
-        msg:
-          type: string
-          description: Human-readable error description.
-          examples:
-            - "SYSTEM_ERROR"
-            - "NOT_YET_LOGIN"
-        data:
-          type: ["object", "string"]
-          description: Typically `null` for errors.
+          description: Endpoint-specific payload. Typically null for errors.
 
     Device:
       type: object
@@ -436,7 +426,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
+                  - $ref: "#/components/schemas/Response"
                   - type: object
                     properties:
                       data:
@@ -520,7 +510,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
+                  - $ref: "#/components/schemas/Response"
                   - type: object
                     properties:
                       data:
@@ -543,7 +533,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: "#/components/schemas/Response"
 
   /device/device/realInfo:
     post:
@@ -561,7 +551,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
+                  - $ref: "#/components/schemas/Response"
                   - type: object
                     properties:
                       data:
@@ -653,7 +643,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: "#/components/schemas/Response"
 
   /device/device/manualFeeding:
     post:
@@ -693,7 +683,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: "#/components/schemas/Response"
 
   /device/data/grainStatus:
     post:
@@ -710,7 +700,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
+                  - $ref: "#/components/schemas/Response"
                   - type: object
                     properties:
                       data:
