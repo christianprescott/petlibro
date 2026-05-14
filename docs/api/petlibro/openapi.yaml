@@ -453,70 +453,68 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - allOf:
-                      - $ref: "#/components/schemas/SuccessResponse"
-                      - type: object
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [token]
                         properties:
-                          data:
-                            type: object
-                            required: [token]
-                            properties:
-                              token:
-                                type: string
-                                description: |
-                                  Opaque session token. Pass this value as the `token` header on all
-                                  subsequent authenticated requests.
-                                example: "fe8d304a0effd0a242914660cbce6512"
-                              clientId:
-                                type: string
-                                example: "APP_190294628"
-                              pushId:
-                                type: string
-                                nullable: true
-                                example: null
-                              memberId:
-                                type: integer
-                                example: 190294628
-                              account:
-                                type: string
-                                description: Account identifier. In practice the same as email.
-                                example: "example@example.com"
-                              accountType:
-                                type: integer
-                                example: 1
-                              email:
-                                type: string
-                                format: email
-                                example: "example@example.com"
-                              avatar:
-                                type: string
-                                nullable: true
-                                example: null
-                              nickname:
-                                type: string
-                                example: ""
-                              country:
-                                type: string
-                                example: "US"
-                              gender:
-                                type: integer
-                                enum: [0, 1, 2]
-                                example: 0
-                              status:
-                                type: integer
-                                example: 0
-                              enableBiometric:
-                                type: boolean
-                                example: false
-                              area:
-                                type: string
-                                example: "US"
-                              petCareKind:
-                                type: string
-                                example: "FREE"
-                            additionalProperties: true
-                  - $ref: "#/components/schemas/ErrorResponse"
+                          token:
+                            type: string
+                            description: |
+                              Opaque session token. Pass this value as the `token` header on all
+                              subsequent authenticated requests.
+                            example: "fe8d304a0effd0a242914660cbce6512"
+                          clientId:
+                            type: string
+                            example: "APP_190294628"
+                          pushId:
+                            type: string
+                            nullable: true
+                            example: null
+                          memberId:
+                            type: integer
+                            example: 190294628
+                          account:
+                            type: string
+                            description: Account identifier. In practice the same as email.
+                            example: "example@example.com"
+                          accountType:
+                            type: integer
+                            example: 1
+                          email:
+                            type: string
+                            format: email
+                            example: "example@example.com"
+                          avatar:
+                            type: string
+                            nullable: true
+                            example: null
+                          nickname:
+                            type: string
+                            example: ""
+                          country:
+                            type: string
+                            example: "US"
+                          gender:
+                            type: integer
+                            enum: [0, 1, 2]
+                            example: 0
+                          status:
+                            type: integer
+                            example: 0
+                          enableBiometric:
+                            type: boolean
+                            example: false
+                          area:
+                            type: string
+                            example: "US"
+                          petCareKind:
+                            type: string
+                            example: "FREE"
+                        additionalProperties: true
 
   /device/device/list:
     post:
