@@ -20,6 +20,7 @@ servers:
 tags:
   - name: Auth
   - name: Devices
+  - name: Feeding Plans
 
 security:
   - TokenAuth: []
@@ -72,13 +73,9 @@ components:
             required: [id, deviceSn]
             properties:
               id:
-                type: string
-                description: Device serial number.
-                example: "AF060130AC701DEW1"
+                $ref: "#/components/schemas/DeviceSn"
               deviceSn:
-                type: string
-                description: Device serial number.
-                example: "AF060130AC701DEW1"
+                $ref: "#/components/schemas/DeviceSn"
 
   schemas:
     Response:
@@ -106,6 +103,16 @@ components:
         data:
           description: Endpoint-specific payload. Typically null for errors.
 
+    DeviceSn:
+      type: string
+      description: Device serial number.
+      example: "AF060130AC701DEW1"
+
+    ProductIdentifier:
+      type: string
+      description: Product identifier code.
+      example: "PLAF301"
+
     Device:
       type: object
       description: |
@@ -118,16 +125,9 @@ components:
         - productName
       properties:
         deviceSn:
-          type: string
-          description: |
-            Unique device serial number. Used as both `id` and `deviceSn` in
-            the request body of device-specific API calls.
-          example: "AF060130AC701DEW1"
+          $ref: "#/components/schemas/DeviceSn"
         productIdentifier:
-          type: string
-          description: |
-            Device model code.
-          example: "PLAF301"
+          $ref: "#/components/schemas/ProductIdentifier"
         productName:
           type: string
           description: |
@@ -520,7 +520,7 @@ paths:
 
   /device/device/baseInfo:
     post:
-      operationId: deviceBaseInfo
+      operationId: getBaseInfo
       summary: Get base configuration for a device
       description: |
         Retrieve basic information for a specific device.
@@ -537,7 +537,7 @@ paths:
 
   /device/device/realInfo:
     post:
-      operationId: deviceRealInfo
+      operationId: getRealInfo
       summary: Retrieve real-time information from a device.
       description: |
         Retrieve real-time information from a specific device, such as feeding activity, current settings, and status.
@@ -559,7 +559,7 @@ paths:
 
   /device/device/displayMatrix:
     post:
-      operationId: deviceDisplayMatrix
+      operationId: setMatrix
       summary: Set the LED matrix display content
       description: |
         Sets what is shown on the device's LED matrix display. The endpoint
@@ -645,9 +645,86 @@ paths:
               schema:
                 $ref: "#/components/schemas/Response"
 
+  /device/device/getDefaultMatrix:
+    get:
+      operationId: getDefaultMatrix
+      summary: Get the available LED matrix display content.
+      tags: [Devices]
+      parameters:
+        - name: deviceSn
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Device serial number.
+          example: AF060130AC701DEW1
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          defaultMatrix:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  example: Hello
+                                screenDisplayId:
+                                  type: integer
+                                  example: 4
+                                screenDisplayMatrix:
+                                  type: array
+                                  items:
+                                    type: integer
+                                  example:
+                                    [
+                                      0,
+                                      2860128,
+                                      2761872,
+                                      3908752,
+                                      2761872,
+                                      2864736,
+                                      0,
+                                    ]
+                          emojiMatrix:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  example: Love
+                                screenDisplayId:
+                                  type: integer
+                                  example: 5
+                                screenDisplayMatrix:
+                                  type: array
+                                  items:
+                                    type: integer
+                                  example:
+                                    [
+                                      55296,
+                                      130048,
+                                      130048,
+                                      130048,
+                                      63488,
+                                      28672,
+                                      8192,
+                                    ]
+
   /device/device/manualFeeding:
     post:
-      operationId: deviceManualFeeding
+      operationId: manualFeed
       summary: Trigger an immediate manual feed
       description: |
         Commands a feeder to immediately dispense a specified number of food
@@ -687,9 +764,8 @@ paths:
 
   /device/data/grainStatus:
     post:
-      operationId: deviceGrainStatus
-      summary: Retrieve the current grain status.
-      description: Retrieve the current grain status of a feeder, such as the remaining food level and whether there are any blockages.
+      operationId: getGrainStatus
+      summary: Retrieve the current day's feeding summary.
       tags: [Devices]
       requestBody:
         $ref: "#/components/requestBodies/DeviceSerial"
@@ -706,11 +782,390 @@ paths:
                       data:
                         type: object
                         properties:
+                          todayFeedingQuantities:
+                            type: array
+                            items:
+                              type: integer
+                            example: [1, 3]
                           todayFeedingQuantity:
                             type: number
                             description: Total food dispensed today.
-                            example: 2
+                            example: 4
                           todayFeedingTimes:
                             type: integer
                             description: Total number of dispensing events today.
-                            example: 1
+                            example: 2
+
+  /device/feedingPlan/list:
+    post:
+      operationId: listFeedingPlans
+      summary: List all feeding plans for a device.
+      description: Fetch a list of all feeding plans configured on the device, including their schedules and portions.
+      tags: [Feeding Plans]
+      requestBody:
+        $ref: "#/components/requestBodies/DeviceSerial"
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: Array of feeding plan objects for the device.
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: Unique identifier for the feeding plan.
+                              example: 4181304
+                            memberId:
+                              type: integer
+                              example: 190294628
+                            productIdentifier:
+                              $ref: "#/components/schemas/ProductIdentifier"
+                            deviceSn:
+                              $ref: "#/components/schemas/DeviceSn"
+                            executionTime:
+                              type: string
+                              description: Time of day to execute this feeding plan (HH:MM 24-hour format).
+                              example: "08:30"
+                            repeatDay:
+                              type: string
+                              description: "*Stringified* JSON array defining which days of the week this plan repeats (1=Monday through 7=Sunday)."
+                              example: "[1,2,3,4,5]"
+                            label:
+                              type: string
+                              description: User-defined label or name for this feeding plan.
+                              example: "Morning feeding"
+                            enable:
+                              type: boolean
+                              description: Whether this feeding plan is currently enabled.
+                              example: true
+                            enableAudio:
+                              type: boolean
+                              description: Whether audio notification is enabled for this feeding event.
+                              example: false
+                            audioTimes:
+                              type: integer
+                              description: Number of times the audio notification will repeat.
+                              example: 2
+                            grainNum:
+                              type: integer
+                              description: Number of portions to dispense during this feeding event.
+                              example: 1
+                            timezone:
+                              type: string
+                              description: IANA time zone used for the executionTime.
+                              example: America/Chicago
+                            syncState:
+                              type: integer
+                              example: 3
+                            createTime:
+                              type: integer
+                              description: Timestamp (Unix milliseconds) when this plan was created.
+                              example: 1778744424000
+                            updateTime:
+                              type: integer
+                              description: Timestamp (Unix milliseconds) when this plan was last updated
+                              example: 1778744424000
+                            petInfo:
+                              type: array
+
+  /device/feedingPlan/add:
+    post:
+      operationId: createFeedingPlan
+      summary: Create a new feeding plan.
+      description: Create a new automated feeding plan for a device.
+      tags: [Feeding Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceSn
+                - executionTime
+                - grainNum
+              properties:
+                deviceSn:
+                  $ref: "#/components/schemas/DeviceSn"
+                executionTime:
+                  type: string
+                  description: Time of day to execute this feeding plan (HH:MM 24-hour format). Uses `timezone` header to infer timezone.
+                  example: "08:30"
+                repeatDay:
+                  type: string
+                  description: "*Stringified* JSON array defining which days of the week this plan repeats (1=Monday through 7=Sunday). Empty array for one-time execution."
+                  example: "[1,2,3,4,5]"
+                grainNum:
+                  type: integer
+                  description: Number of portions to dispense during this feeding event.
+                  minimum: 1
+                label:
+                  type: string
+                  description: User-defined label or name for this feeding plan.
+                  example: "Morning Feed"
+                enableAudio:
+                  type: boolean
+                  description: Whether audio notification is enabled for this feeding event.
+                  default: false
+                petIds:
+                  type: array
+                  description: Array of pet IDs associated with this feeding plan (typically empty).
+                  items:
+                    type: integer
+                  example: []
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+
+  /device/feedingPlan/update:
+    post:
+      operationId: setFeedingPlan
+      summary: Update feeding plan.
+      tags: [Feeding Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - deviceSn
+              properties:
+                id:
+                  type: integer
+                  description: Unique identifier for the feeding plan.
+                  example: 4181304
+                deviceSn:
+                  $ref: "#/components/schemas/DeviceSn"
+                executionTime:
+                  type: string
+                  description: Time of day to execute this feeding plan (HH:MM 24-hour format). Uses `timezone` header to infer timezone.
+                  example: "08:30"
+                repeatDay:
+                  type: string
+                  description: "*Stringified* JSON array defining which days of the week this plan repeats (1=Monday through 7=Sunday). Empty array for one-time execution."
+                  example: "[1,2,3,4,5]"
+                grainNum:
+                  type: integer
+                  description: Number of portions to dispense during this feeding event.
+                  minimum: 1
+                label:
+                  type: string
+                  description: User-defined label or name for this feeding plan.
+                  example: "Morning Feed"
+                enable:
+                  type: boolean
+                  description: Whether this feeding plan is currently enabled.
+                  example: true
+                enableAudio:
+                  type: boolean
+                  description: Whether audio notification is enabled for this feeding event.
+                  default: false
+                audioTimes:
+                  type: integer
+                  description: Number of times the audio notification will repeat.
+                  example: 2
+                petIds:
+                  type: array
+                  description: Array of pet IDs associated with this feeding plan (typically empty).
+                  items:
+                    type: integer
+                  example: []
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+
+  /device/feedingPlan/enable:
+    post:
+      operationId: setFeedingPlanEnabled
+      summary: Enable or disable feeding plan.
+      tags: [Feeding Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - planId
+                - deviceSn
+              properties:
+                planId:
+                  type: integer
+                  description: Unique identifier for the feeding plan.
+                  example: 4181304
+                deviceSn:
+                  $ref: "#/components/schemas/DeviceSn"
+                enable:
+                  type: boolean
+                  description: Whether this feeding plan is currently enabled.
+                  example: true
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+
+  /device/feedingPlan/remove:
+    post:
+      operationId: deleteFeedingPlan
+      summary: Delete a feeding plan.
+      tags: [Feeding Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceSn
+                - planId
+              properties:
+                deviceSn:
+                  $ref: "#/components/schemas/DeviceSn"
+                planId:
+                  type: integer
+                  description: Identifier of the plan to remove.
+                  example: 5184110
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+
+  /device/workRecord/list:
+    post:
+      operationId: listWorkRecords
+      summary: List device activity history.
+      description: |
+        Returns a paginated, time-bounded list of device work records grouped by day.
+        Each day entry contains one or more individual event records.
+      tags:
+        - Devices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceSn
+                - startTime
+                - endTime
+                - size
+              properties:
+                deviceSn:
+                  $ref: "#/components/schemas/DeviceSn"
+                startTime:
+                  type: integer
+                  format: int64
+                  description: Start of the time range as a Unix timestamp in milliseconds (UTC).
+                  example: 1770794462267
+                endTime:
+                  type: integer
+                  format: int64
+                  description: End of the time range as a Unix timestamp in milliseconds (UTC).
+                  example: 1780012491430
+                size:
+                  type: integer
+                  description: Maximum number of records to return.
+                  example: 25
+      responses:
+        "200":
+          description: The HTTP status is always 200.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: |
+                          List of day-bucket objects. Each entry groups the work records
+                          for a single calendar day.
+                        items:
+                          type: object
+                          properties:
+                            recordTime:
+                              type: string
+                              description: String representation of date.
+                              example: 2026/05/14
+                            dayOfWeek:
+                              type: integer
+                              example: 4
+                            workRecords:
+                              type: array
+                              description: Activity records for this day.
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                    example: 1f42e2d95d504f699b910136eabc17cd
+                                  deviceSn:
+                                    $ref: "#/components/schemas/DeviceSn"
+                                  type:
+                                    type: string
+                                    description: |
+                                      Record type identifier.
+                                      Known values: `GRAIN_OUTPUT_SUCCESS`.
+                                    enum:
+                                      - GRAIN_OUTPUT_SUCCESS
+                                      - GRAIN_OUTPUT_FAILED
+                                      - OFFLINE
+                                      - ONLINE
+                                    example: GRAIN_OUTPUT_SUCCESS
+                                  eventType:
+                                    type: string
+                                    enum:
+                                      - FEEDING_PLAN_SUCCESS
+                                      - FEEDING_PLAN_GRAIN_NOT_ENOUGH
+                                      - MANUAL_FEEDING_SUCCESS
+                                      - MANUAL_FEEDING_GRAIN_NOT_ENOUGH
+                                      - IAMFEED_FAIL_UNKNOWN_REASONS
+                                      - OFFLINE
+                                      - ONLINE
+                                    example: FEEDING_PLAN_SUCCESS
+                                  recordTime:
+                                    type: integer
+                                    format: int64
+                                    description: Timestamp of the event as Unix milliseconds (UTC).
+                                    example: 1778802904000
+                                  formatRecordTime:
+                                    type: string
+                                    description: Formatted timestamp of the event.
+                                    example: 2026-05-14 17:55
+                                  expectGrainNum:
+                                    type: integer
+                                    example: 1
+                                  actualGrainNum:
+                                    type: integer
+                                    example: 1
+                                  content:
+                                    type: string
+                                    example: "Food has dispensed successfully. Food levels are low. Please refill soon."
+                                additionalProperties: true
