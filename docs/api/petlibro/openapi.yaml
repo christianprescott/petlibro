@@ -100,7 +100,8 @@ components:
           description: Always `0` on success.
           example: 0
         msg:
-          type: "null"
+          type: string
+          nullable: true
           description: |
             Status message is null on success.
             Non-null string values appear only on errors.
@@ -128,7 +129,7 @@ components:
             - "SYSTEM_ERROR"
             - "NOT_YET_LOGIN"
         data:
-          type: "null"
+          type: ["object", "string"]
           description: Typically `null` for errors.
 
     Device:
@@ -262,7 +263,8 @@ components:
           type: string
           example: "NORMAL"
         exceptionMessage:
-          type: ["string", "null"]
+          type: string
+          nullable: true
         deviceStoppedWorking:
           type: boolean
           example: false
@@ -349,7 +351,8 @@ components:
           type: string
           example: "NORMAL"
         cameraAuthInfo:
-          type: ["string", "null"]
+          type: string
+          nullable: true
 
 paths:
   /member/auth/login:
@@ -427,14 +430,6 @@ paths:
                   type: string
                   description: IANA timezone name for this session.
                   example: "America/Chicago"
-                thirdId:
-                  type: ["null"]
-                  default: null
-                  example: null
-                type:
-                  type: ["null"]
-                  default: null
-                  example: null
 
             examples:
               EmailLogin:
@@ -477,7 +472,8 @@ paths:
                                 type: string
                                 example: "APP_190294628"
                               pushId:
-                                type: ["string", "null"]
+                                type: string
+                                nullable: true
                                 example: null
                               memberId:
                                 type: integer
@@ -494,7 +490,8 @@ paths:
                                 format: email
                                 example: "example@example.com"
                               avatar:
-                                type: ["string", "null"]
+                                type: string
+                                nullable: true
                                 example: null
                               nickname:
                                 type: string
@@ -651,7 +648,8 @@ paths:
                   type: string
                   description: Device serial number.
                 screenDisplayId:
-                  type: ["integer", "null"]
+                  type: integer
+                  nullable: true
                   description: |
                     ID of a built-in icon preset to display. Set to `null`
                     when using other mode.
@@ -676,7 +674,8 @@ paths:
                     The outer array can be used to send multiple frames to animate.
                   example: null
                 screenLetter:
-                  type: ["string", "null"]
+                  type: string
+                  nullable: true
                   description: |
                     Letter to show on the display.
                     Set to `null` when using other mode.
