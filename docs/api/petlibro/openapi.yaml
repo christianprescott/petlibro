@@ -122,6 +122,10 @@ components:
         A Petlibro device (feeder, fountain, or litter box).
       # field sets vary across device models
       additionalProperties: true
+      required:
+        - deviceSn
+        - productIdentifier
+        - productName
       properties:
         deviceSn:
           type: string
