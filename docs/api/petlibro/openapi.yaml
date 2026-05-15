@@ -102,6 +102,7 @@ components:
           example: null
         data:
           description: Endpoint-specific payload. Typically null for errors.
+          const: null
 
     DeviceSn:
       type: string
